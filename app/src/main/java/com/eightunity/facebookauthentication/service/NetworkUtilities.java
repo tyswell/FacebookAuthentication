@@ -3,6 +3,7 @@ package com.eightunity.facebookauthentication.service;
 import android.accounts.NetworkErrorException;
 import android.content.Context;
 import android.os.Bundle;
+import android.os.Looper;
 
 import com.eightunity.facebookauthentication.authenticator.Authenticator;
 import com.facebook.FacebookSdk;
@@ -25,6 +26,10 @@ public class NetworkUtilities {
     private String mAccessToken;
 
     public NetworkUtilities(String token, Context context) {
+        if (Looper.myLooper() == null) {
+            Looper.prepare();
+        }
+
         FacebookSdk.sdkInitialize(context);
         mAccessToken = token;
     }

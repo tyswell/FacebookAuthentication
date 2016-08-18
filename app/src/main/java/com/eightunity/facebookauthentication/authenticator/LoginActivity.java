@@ -29,6 +29,8 @@ import com.facebook.login.LoginResult;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.util.Arrays;
+
 /**
  * Created by deksen on 8/12/16 AD.
  */
@@ -90,6 +92,7 @@ public class LoginActivity extends AccountAuthenticatorActivity {
         mCallbackManager = CallbackManager.Factory.create();
 
         LoginManager.getInstance().registerCallback(mCallbackManager, mStatusCallback);
+        LoginManager.getInstance().logInWithReadPermissions(this, Arrays.asList(Authenticator.REQUIRED_PERMISSIONS));
     }
 
     @Override
@@ -183,5 +186,17 @@ public class LoginActivity extends AccountAuthenticatorActivity {
                 mLoading.dismiss();
             } catch (Exception e) { }
         }
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+
     }
 }
