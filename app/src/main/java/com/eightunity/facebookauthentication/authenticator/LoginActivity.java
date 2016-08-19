@@ -3,6 +3,7 @@ package com.eightunity.facebookauthentication.authenticator;
 import android.accounts.Account;
 import android.accounts.AccountAuthenticatorActivity;
 import android.accounts.AccountManager;
+import android.app.AlertDialog;
 import android.app.ProgressDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -13,6 +14,7 @@ import android.view.Gravity;
 import android.view.View;
 import android.widget.Button;
 import android.widget.LinearLayout;
+import android.widget.TextView;
 
 import com.eightunity.facebookauthentication.constant.Constants;
 import com.facebook.AccessToken;
@@ -41,14 +43,20 @@ public class LoginActivity extends AccountAuthenticatorActivity {
     private AccountManager mAccountManager;
     protected Button mCloseButton;
     private String mUsername;
+    protected AlertDialog mDialog;
     protected ProgressDialog mLoading;
     protected boolean mRequestNewAccount = false;
     private CallbackManager mCallbackManager;
     public final Handler mHandler = new Handler();
+    protected TextView mMessageView;
     private SessionStatusCallback mStatusCallback = new SessionStatusCallback();
     @Override
     protected void onCreate(Bundle icicle) {
         super.onCreate(icicle);
+
+        mMessageView = new TextView(this);
+        mMessageView.setPadding(15, 10, 15, 15);
+        mMessageView.setGravity(Gravity.CENTER);
 
         mCloseButton = new Button(this);
         mCloseButton.setText("Close");
@@ -64,6 +72,7 @@ public class LoginActivity extends AccountAuthenticatorActivity {
 
         LinearLayout layout = new LinearLayout(this);
         layout.setOrientation(LinearLayout.VERTICAL);
+        layout.addView(mMessageView);
         layout.addView(mCloseButton);
 
         setContentView(layout);
@@ -93,6 +102,7 @@ public class LoginActivity extends AccountAuthenticatorActivity {
 
         LoginManager.getInstance().registerCallback(mCallbackManager, mStatusCallback);
         LoginManager.getInstance().logInWithReadPermissions(this, Arrays.asList(Authenticator.REQUIRED_PERMISSIONS));
+        mMessageView.setText("Trying to authenticat with Facebook.\nPlease wait ..");
     }
 
     @Override
@@ -121,11 +131,13 @@ public class LoginActivity extends AccountAuthenticatorActivity {
 
         @Override
         public void onCancel() {
+            mMessageView.setText("Facebook login canceled.");
             mCloseButton.setVisibility(View.VISIBLE);
         }
 
         @Override
         public void onError(FacebookException error) {
+            mMessageView.setText("Facebook login failed:\n" + error.getMessage());
             mCloseButton.setVisibility(View.VISIBLE);
         }
     }
@@ -173,7 +185,36 @@ public class LoginActivity extends AccountAuthenticatorActivity {
                 } catch (JSONException e) {
                     e.printStackTrace();
                 }
+            } else {
+                mHandler.post(new DisplayException("API error:\n" + response.getError().getErrorMessage()));
             }
+        }
+    }
+
+    protected  class DisplayException implements Runnable {
+        String mMessage;
+
+        public DisplayException(String msg) {
+            mMessage = msg;
+        }
+
+        @Override
+        public void run() {
+            AlertDialog.Builder builder = new AlertDialog.Builder(LoginActivity.this);
+            builder.setTitle("Facebook Error");
+            builder.setMessage(mMessage);
+            builder.setOnCancelListener(new DialogInterface.OnCancelListener() {
+                @Override
+                public void onCancel(DialogInterface dialog) {
+                    mDialog.dismiss();
+                    mLoading.dismiss();
+                    LoginActivity.this.finish();
+                }
+            });
+            try {
+                mDialog = builder.create();
+                mDialog.show();
+            } catch (Exception e) { }
         }
     }
 
